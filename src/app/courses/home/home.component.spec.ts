@@ -23,6 +23,8 @@ describe('HomeComponent', () => {
     const beginnerCourses: Course[] = setupCourses().filter(course => course.category === 'BEGINNER');
     const advancedCourses: Course[] = setupCourses().filter(course => course.category === 'ADVANCED');
 
+    // async covers block in Test Zone
+    // we use async() instead of fakeAsync() here, because configureTestingModule makes real http calls for BE to get templates and other resources
     beforeEach(async(() => {
         const coursesServiceSpy = jasmine.createSpyObj('CoursesService', ['findAllCourses']);
 
@@ -49,7 +51,7 @@ describe('HomeComponent', () => {
     });
 
     it('should display only beginner courses', () => {
-        // of(): creates Observable => immediately emits its value => completes. All it - sync
+        // of(): creates Observable => immediately emits its value => completes. All these steps are synchronous
         coursesService.findAllCourses.and.returnValue(of(beginnerCourses));
         fixture.detectChanges();
 
@@ -74,7 +76,7 @@ describe('HomeComponent', () => {
     });
 
     // done cb - tells Jasmine that it'll be an async test
-    it('should display advanced courses when tab clicked', (done) => {
+    it('should display advanced courses when tab clicked - with done()', (done) => {
         coursesService.findAllCourses.and.returnValue(of(setupCourses()));
         fixture.detectChanges();
 
@@ -83,9 +85,9 @@ describe('HomeComponent', () => {
         // OR to use: click(tabs[1]);
         fixture.detectChanges();
 
+        // we need timeout because of AngularMaterial tabs RequestAnimationFrame - animation for changing tab s
         setTimeout(() => {
-            fixture.detectChanges(); // to check why do I need to call it twice?
-            const cardsTitles = debugElement.queryAll(By.css('.mat-card-title'));
+            const cardsTitles = debugElement.queryAll(By.css('.mat-tab-body-active .mat-card-title'));
             expect(cardsTitles.length).toBeGreaterThan(0, 'Could not find card titles');
             expect(cardsTitles[0].nativeElement.textContent)
                 .toContain('Angular Security Course', 'Incorrect course title');
@@ -93,4 +95,45 @@ describe('HomeComponent', () => {
             done();
         }, 500);
     });
+
+    // fakeAsync() - is better then async(), because:
+    // 1. Control over time
+    // 2. sync looking was of writing expectations
+    // 3. control on clearing micro- and macrotasks
+    it('should display advanced courses when tab clicked - with fakeAsync', fakeAsync(() => {
+        coursesService.findAllCourses.and.returnValue(of(setupCourses()));
+        fixture.detectChanges();
+
+        const tabs = debugElement.queryAll(By.css('.mat-tab-label'));
+        tabs[1].nativeElement.click();
+        fixture.detectChanges();
+
+        flush(); // will empty the tasks queue (macrotasks)
+        // tick(500);  // ms for RequestAnimationFrame to finish
+
+        const cardsTitles = debugElement.queryAll(By.css('.mat-tab-body-active .mat-card-title'));
+        expect(cardsTitles.length).toBeGreaterThan(0, 'Could not find card titles');
+        expect(cardsTitles[0].nativeElement.textContent)
+            .toContain('Angular Security Course', 'Incorrect course title');
+    }));
+
+    // benefits of async() over fakeAsync() - it supports actual http requests (e.g - for integration T, that make real http requests)
+    it('should display advanced courses when tab clicked - with async', async(() => {
+        coursesService.findAllCourses.and.returnValue(of(setupCourses()));
+        fixture.detectChanges();
+
+        const tabs = debugElement.queryAll(By.css('.mat-tab-label'));
+        tabs[1].nativeElement.click();
+        fixture.detectChanges();
+
+        // whenStable() - cb f(), that async() f() will call when all async operations, that TestZone has detected, are completed
+        // async deals both: with micro- and macrotasks (Promises, Timeouts)
+        fixture.whenStable().then(() => {
+            console.log('Called whenStable()');
+            const cardsTitles = debugElement.queryAll(By.css('.mat-tab-body-active .mat-card-title'));
+            expect(cardsTitles.length).toBeGreaterThan(0, 'Could not find card titles');
+            expect(cardsTitles[0].nativeElement.textContent)
+                .toContain('Angular Security Course', 'Incorrect course title');
+        });
+    }));
 });
