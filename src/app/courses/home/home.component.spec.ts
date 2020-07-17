@@ -3,15 +3,11 @@ import {CoursesModule} from '../courses.module';
 import {DebugElement} from '@angular/core';
 
 import {HomeComponent} from './home.component';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {CoursesService} from '../services/courses.service';
-import {HttpClient} from '@angular/common/http';
-import {COURSES} from '../../../../server/db-data';
 import {setupCourses} from '../common/setup-test-data';
 import {By} from '@angular/platform-browser';
 import {of} from 'rxjs';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
-import {click} from '../common/test-utils';
 import {Course} from '../model/course';
 
 describe('HomeComponent', () => {
@@ -43,7 +39,7 @@ describe('HomeComponent', () => {
         fixture = TestBed.createComponent(HomeComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        coursesService = TestBed.get(CoursesService); // points to spy f()
+        coursesService = TestBed.inject(CoursesService); // points to spy f()
     });
 
     it('should create the component', () => {
@@ -98,7 +94,7 @@ describe('HomeComponent', () => {
 
     // fakeAsync() - is better then async(), because:
     // 1. Control over time
-    // 2. sync looking was of writing expectations
+    // 2. sync looking way of writing expectations
     // 3. control on clearing micro- and macrotasks
     it('should display advanced courses when tab clicked - with fakeAsync', fakeAsync(() => {
         coursesService.findAllCourses.and.returnValue(of(setupCourses()));

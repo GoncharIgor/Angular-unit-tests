@@ -1,7 +1,7 @@
 import {CoursesService} from './courses.service';
 import {TestBed} from '@angular/core/testing';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {COURSES, findLessonsForCourse, LESSONS} from '../../../../server/db-data';
+import {COURSES, findLessonsForCourse} from '../../../../server/db-data';
 import {Course} from '../model/course';
 import {HttpErrorResponse} from '@angular/common/http';
 
@@ -11,7 +11,7 @@ describe('CoursesService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            // instead og HttpClient module service
+            // instead of HttpClient module service
             // HttpClientTestingModule - instead of making real server requests, will return mocked data
             imports: [HttpClientTestingModule],
             providers: [
@@ -19,7 +19,6 @@ describe('CoursesService', () => {
             ]
         });
 
-        // ??? - is the same: coursesService = TestBed.get(CoursesService);
         coursesService = TestBed.inject(CoursesService);
         httpTestingController = TestBed.inject(HttpTestingController);
     });
@@ -37,6 +36,12 @@ describe('CoursesService', () => {
         const req = httpTestingController.expectOne('/api/courses'); // only 1 http request was made by http module to '/api/courses'
         expect(req.request.method).toEqual('GET');
 
+        // Expect that one request will be made and it will be without an authorization header
+        const noAuthHeaderReq = httpTestingController.expectOne(
+            req2 => !req2.headers.has('Authorization')
+        );
+
+        // Respond with mock data, causing Observable to resolve
         req.flush({ // we set the mock data, that will be send as response for the call on '/api/courses'
             payload: Object.values(COURSES)
         });
@@ -81,9 +86,10 @@ describe('CoursesService', () => {
 
         coursesService.saveCourse(12, updatedCourse).subscribe(() => {
             // we expecting this test case not to be successful, so if it reaches subscribe() data f(), then we fail it
-            return fail('The save course should fail');
+            return fail('The save course should fail, but not reach inside subscribe()');
         }, (error: HttpErrorResponse) => {
             expect(error.status).toBe(500);
+            expect(error.error).toEqual('Save course failed', 'Incorrect error message');
         });
 
         const req = httpTestingController.expectOne('/api/courses/12');
@@ -93,6 +99,28 @@ describe('CoursesService', () => {
             status: 500,
             statusText: 'Internal Server Error'
         });
+    });
+
+    // better to use upper one - we have control on statuses and all custom properties
+    it('should give an error if saveCourse() fails - with req.error()', () => {
+        const updatedCourse: Partial<Course> = {titles: {description: 'Testing course'}};
+
+        coursesService.saveCourse(12, updatedCourse).subscribe(() => {
+            // we expecting this test case not to be successful, so if it reaches subscribe() data f(), then we fail it
+            return fail('The save course should fail, but not reach inside subscribe()');
+        }, (error: HttpErrorResponse) => {
+            expect(error.error.message).toEqual('Internal Server Error');
+        });
+
+        const req = httpTestingController.expectOne('/api/courses/12');
+        expect(req.request.method).toEqual('PUT');
+
+        const mockError = new ErrorEvent('Network error', {
+            message: 'Internal Server Error',
+        });
+
+        // Respond with mock error
+        req.error(mockError);
     });
 
     it('should find a list of lessons', () => {
@@ -117,7 +145,22 @@ describe('CoursesService', () => {
         );
     });
 
+    // It takes the same arguments but returns an array of matching requests
+    xit('should deal with multiple requests - match()', () => {
+        // get all pending requests that match the given URL
+        const requests = httpTestingController.match('/api/cars');
+        expect(requests.length).toEqual(3);
+
+        const testData = ['bmw', 'audi'];
+
+        // Respond to each request with different results
+        requests[0].flush([]);
+        requests[1].flush([testData[0]]);
+        requests[2].flush(testData);
+    });
+
     afterEach(() => {
+        // assert that there are no outstanding requests.
         httpTestingController.verify(); // checks that only requests, that are indicated in expect f()s (e.g. expectOne() ), are executed
     });
 
