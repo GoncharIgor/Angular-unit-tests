@@ -19,6 +19,9 @@ describe('CoursesService', () => {
             ]
         });
 
+        // TestBed.inject() is the same
+        // but it only works when Angular injects the component with the service instance in the test's root injector.
+        // In this test suite, the only provider of UserService is the root testing module, so it is safe to call TestBed.inject()
         coursesService = TestBed.inject(CoursesService);
         httpTestingController = TestBed.inject(HttpTestingController);
     });

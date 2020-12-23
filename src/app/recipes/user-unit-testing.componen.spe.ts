@@ -30,6 +30,7 @@ describe('UserUnitTestingComponent', () => {
 
     it('should use user name from the shared', () => {
         // to inject shared to testing component
+        // TestBed.inject() is the same, but service has to be provided in 'root'
         const userService = fixture.debugElement.injector.get(UserTestCompServic);
         fixture.detectChanges();
         expect(userService.user.name).toEqual('Igor');

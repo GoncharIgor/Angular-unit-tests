@@ -1,4 +1,4 @@
-import {async, ComponentFixture, fakeAsync, flush, flushMicrotasks, TestBed, tick} from '@angular/core/testing';
+import {async, ComponentFixture, fakeAsync, flush, TestBed} from '@angular/core/testing';
 import {CoursesModule} from '../courses.module';
 import {DebugElement} from '@angular/core';
 
@@ -24,6 +24,7 @@ describe('HomeComponent', () => {
     beforeEach(async(() => {
         const coursesServiceSpy = jasmine.createSpyObj('CoursesService', ['findAllCourses']);
 
+        // The default test module is pre-configured with something like the BrowserModule from @angular/platform-browser
         TestBed.configureTestingModule({
             imports: [
                 CoursesModule,
@@ -32,12 +33,15 @@ describe('HomeComponent', () => {
             providers: [
                 {provide: CoursesService, useValue: coursesServiceSpy}
             ]
-        }).compileComponents();
+        }).compileComponents(); // compile template and css
     }));
 
     beforeEach(() => {
         fixture = TestBed.createComponent(HomeComponent);
-        component = fixture.componentInstance;
+        // createComponent()  f() freezes the current TestBed definition
+        // Angular guide makes component with debugElement: component = fixture.debugElement.componentInstance
+        component = fixture.componentInstance; // creates an instance of the class 'HomeComponent'
+        // DebugElement is a wrapper across native elements and tested component allowing test to run on all supported platforms
         debugElement = fixture.debugElement;
         coursesService = TestBed.inject(CoursesService); // points to spy f()
     });
@@ -46,7 +50,7 @@ describe('HomeComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should display only beginner courses', () => {
+    fit('should display only beginner courses', () => {
         // of(): creates Observable => immediately emits its value => completes. All these steps are synchronous
         coursesService.findAllCourses.and.returnValue(of(beginnerCourses));
         fixture.detectChanges();
@@ -133,3 +137,6 @@ describe('HomeComponent', () => {
         });
     }));
 });
+
+// const bannerElement: HTMLElement = fixture.nativeElement;
+// This is actually a convenience method, implemented as fixture.debugElement.nativeElement.
