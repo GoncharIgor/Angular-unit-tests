@@ -87,6 +87,9 @@ describe('Async Testing Example', () => {
         const test$ = of(test);
 
         // this code is synchronous, thus no need to use fakeAsync()
+        // Observables can be either synchronous or asynchronous.
+        // Observable is asynchronous if it wraps an http call
+        // in this case, with usage "of", Observable is sync
         test$.subscribe(() => {
             test = true;
         });

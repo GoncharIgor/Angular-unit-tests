@@ -8,12 +8,27 @@ describe('CalculatorService', () => {
     let loggerSpy: jasmine.SpyObj<LoggerService>;
 
     beforeEach(() => {
+        // https://scriptverse.academy/tutorials/jasmine-createspy-createspyobj.html
+        // function Bird() {
+        //   this.getSound = function() {
+        //   	return 'Chirp, Chirp!';
+        //   }
+        // };
+        //
+        // in test:
+        // var b = new Bird();
+        // b.getSound = jasmine.createSpy('The name of Spy');
+        // b.getSound();
+        // expect(b.getSound).toHaveBeenCalled();
+
+
         // if we need only 1 f() or Observable to mock, than we may create such obj:
         // const viewPropertiesSpy = jasmine.createSpy('viewPropertiesSpy')
         // name in brackets - just for easiness to debug
         // and then in it() test: component.viewProperties$.subscribe(viewPropertiesSpy);
         // const viewProperties = viewPropertiesSpy.calls.argsFor(0)[0];
 
+        // createSpyObj() creates a mock object with multiple spies.
         // createSpyObj - we create fake LoggerService, instead of having its real instance. In [] brackets - its f()s
         // if we wanted to return any value: loggerSpy.printLog.and.returnValue('Fake value that is returned after f() is called')
         const spy = jasmine.createSpyObj('LoggerService', ['printLog']);
